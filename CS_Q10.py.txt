@@ -1,0 +1,92 @@
+Input = open("input.txt", "r")
+Output = open("output.txt", "w")
+expression_lines = []
+expression_lines = Input.readlines()
+Trees = []
+
+for i in range(len(expression_lines)):
+    expression_lines[i] = expression_lines[i].replace("(", " ( ").replace(")", " ) ")
+    expression_lines[i] = expression_lines[i].split()
+    if len(expression_lines[i]) > 1:
+        del(expression_lines[i][0])
+        del(expression_lines[i][-1])
+
+def create_tree(tokens, tree):
+    while len(tokens) > 0:
+        if tokens[0] == "(":
+            tree.append([])
+            tokens = create_tree(tokens[1:], tree[-1])
+
+        elif tokens[0] == ")":
+            return tokens[1:]
+
+        else:
+            tree.append(tokens[0])
+            tokens = tokens[1:]
+
+def basic_operations(expression):
+    expression[1] = int(expression[1])
+    expression[2] = int(expression[2])
+    if expression[0] == '+':
+        return int(expression[1] + expression[2])
+    if expression[0] == '-':
+        return int(expression[1] - expression[2])
+    if expression[0] == '*':
+        return int(expression[1] * expression[2])
+    if expression[0] == '/':
+        return int(expression[1] / expression[2])
+    if expression[0] == '=':
+        return int(expression[1] == expression[2])
+    if expression[0] == '<':
+        return int(expression[1] < expression[2])
+    
+def evaluate_expression(expression, functions, variables):
+    new_expression = expression.copy()
+    if new_expression[0] == "defun":
+        functions[new_expression[1]] = [new_expression[2], new_expression[3]]
+        return (0, functions, variables)
+            
+    for i in range(len(expression)):
+        if type(new_expression[i]) == list:
+            if new_expression[0] == "if":
+                if evaluate_expression(new_expression[1], functions, variables)[0] == 0:
+                    return evaluate_expression(new_expression[3], functions, variables)
+                else:
+                    return evaluate_expression(new_expression[2], functions, variables)
+                
+            new_expression[i] = evaluate_expression(new_expression[i], functions, variables)[0]
+
+    if new_expression[0] == "set":
+        variables[new_expression[1]] = new_expression[2]
+        return (new_expression[2], functions, variables)
+
+    for i in range(len(new_expression)):
+        if new_expression[i] in list(variables.keys()):
+            new_expression[i] = variables[new_expression[i]]
+            
+    if new_expression[0] in functions.keys():
+        variables[functions[new_expression[0]][0]] = new_expression[1]
+        output = evaluate_expression(functions[new_expression[0]][1].copy(), functions, variables)
+        return output
+
+    if len(new_expression) == 1:
+        return (new_expression[0], functions, variables)
+
+    if new_expression[0] in ['+', '-', '*', '/', '=', '<']:
+        return (basic_operations(new_expression), functions, variables)
+
+Variables = {}
+Functions = {}
+output = ""
+for expression_line in expression_lines:
+    if len(expression_line) == 0:
+        continue
+    Tree = []
+    create_tree(expression_line, Tree)
+    value = evaluate_expression(Tree, Functions, Variables)[0]
+    output += str(value) + "\n"
+
+output = output.strip()
+Output.write(output)
+Input.close()
+Output.close()

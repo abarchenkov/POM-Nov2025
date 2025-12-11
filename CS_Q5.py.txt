@@ -1,0 +1,44 @@
+Input = open("input.txt", 'r')
+Output = open("output.txt", 'w')
+
+expression = str(Input.readline())
+expression = expression.replace(" ", "")
+expression = expression.replace("(", " ( ")
+expression = expression.replace(")", " ) ")
+Tokens = expression.split()
+Tree = []
+
+def parse(tokens, tree) :
+    while (len(tokens) > 0) :
+        if (tokens[0] == '(') :
+            tree.append([])
+            tokens = tokens[1:]
+            tokens = parse(tokens, tree[-1])
+        elif (tokens[0] == ')') :
+            tokens = tokens[1:]
+            return tokens
+        else :
+            tree.append(tokens[0])
+            tokens = tokens[1:]
+    
+parse(Tokens, Tree)
+
+def traverse_tree(tree):
+    result = ""
+    if len(tree) == 0:
+        return result
+    if (len(tree) == 3) :    
+        left_child = tree[0]
+        node = tree[1]
+        right_child = tree[2]
+        result += traverse_tree(left_child)
+        result += traverse_tree(right_child)
+        result += node + " "
+    else :
+        result += tree[0] + " "
+    return result
+
+Output.write(traverse_tree(Tree))
+Input.close()
+Output.close()
+
